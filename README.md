@@ -62,6 +62,18 @@ When your cluster runs in a high-carbon region, EcoScale outputs:
 
 ---
 
+## Website
+
+A product website lives in `web/index.html` (and `docs/index.html` for GitHub Pages) with What, Why, How, For Whom, Features, and live GitHub stats (stars, forks, contributors). To host on GitHub Pages:
+
+1. In repo **Settings → Pages**, set Source to **Deploy from a branch**
+2. Branch: `main`, Folder: **`/docs`**
+3. Site will be live at `https://rahul-tarka.github.io/eco-scale-optimizer/`
+
+To preview locally: `cd web && python3 -m http.server 8000` then open http://localhost:8000
+
+---
+
 ## Quick Start
 
 ### 1. Build & Run (Standalone)

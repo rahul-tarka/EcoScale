@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoScale — World's First Carbon-Aware Kubernetes Controller</title>
+  <meta name="description" content="The world's first Carbon-Aware Kubernetes Controller that chases the sun to reduce cloud emissions by up to 30% without increasing costs.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            emerald: {
+              DEFAULT: '#10b981',
+              light: '#34d399',
+              dark: '#059669',
+            },
+            dark: {
+              900: '#0f172a',
+              800: '#1e293b',
+              700: '#334155',
+              600: '#475569',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .font-sans { font-family: 'Inter', system-ui, sans-serif; }
+    .code-key { color: #34d399; }
+    .code-string { color: #fbbf24; }
+    .code-comment { color: #64748b; }
+  </style>
+</head>
+<body class="font-sans bg-slate-950 text-slate-100 antialiased">
+  <!-- Nav -->
+  <nav class="sticky top-0 z-50 flex items-center justify-between px-6 py-4 max-w-6xl mx-auto bg-slate-950/80 backdrop-blur border-b border-slate-800/50">
+    <a href="#" class="text-xl font-bold text-white tracking-tight">
+      Eco<span class="text-emerald">Scale</span>
+    </a>
+    <div class="flex gap-6 text-sm">
+      <a href="#what" class="text-slate-400 hover:text-emerald transition-colors">What</a>
+      <a href="#why" class="text-slate-400 hover:text-emerald transition-colors">Why</a>
+      <a href="#how" class="text-slate-400 hover:text-emerald transition-colors">How</a>
+      <a href="#for-whom" class="text-slate-400 hover:text-emerald transition-colors">For Whom</a>
+      <a href="#features" class="text-slate-400 hover:text-emerald transition-colors">Features</a>
+      <a href="#github" class="text-slate-400 hover:text-emerald transition-colors">GitHub</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-emerald/5 via-transparent to-transparent"></div>
+    <div class="absolute top-0 right-0 w-96 h-96 bg-emerald/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+    <div class="absolute bottom-0 left-0 w-72 h-72 bg-emerald/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+    
+    <section class="relative z-10 max-w-6xl mx-auto px-6 pt-16 pb-24 md:pt-24 md:pb-32">
+      <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white max-w-4xl leading-[1.1]">
+        Stop Burning Money and Carbon.<br>
+        <span class="text-emerald">Automate your GreenOps.</span>
+      </h1>
+      <p class="mt-6 text-lg md:text-xl text-slate-400 max-w-2xl leading-relaxed">
+        The world's first Carbon-Aware Kubernetes Controller that 'chases the sun' to reduce your cloud emissions by up to 30% without increasing costs.
+      </p>
+      
+      <form class="mt-10 flex flex-col sm:flex-row gap-3 max-w-xl" id="waitlist-form">
+        <input type="email" name="email" placeholder="Enter your email" required
+          class="flex-1 px-4 py-3.5 rounded-lg bg-slate-800/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald/50 focus:border-emerald transition-all">
+        <button type="submit" class="px-6 py-3.5 rounded-lg bg-emerald hover:bg-emerald-dark font-semibold text-slate-950 transition-colors shadow-lg shadow-emerald/20 hover:shadow-emerald/30">
+          Join the Beta Waitlist
+        </button>
+      </form>
+      <p class="mt-3 text-sm text-slate-500">No spam. Early access only.</p>
+    </section>
+  </header>
+
+  <!-- What -->
+  <section id="what" class="py-20 md:py-28 bg-slate-900/50">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">What is EcoScale?</h2>
+      <p class="text-slate-400 max-w-3xl text-lg leading-relaxed mb-6">
+        EcoScale is a <strong class="text-white">Carbon-Aware Kubernetes Controller</strong> — a piece of software that runs inside your cluster and makes recommendations based on real-time carbon intensity (CO2 per kWh) of the cloud region powering your nodes.
+      </p>
+      <p class="text-slate-400 max-w-3xl leading-relaxed">
+        Unlike the default Kubernetes scheduler (which only cares about CPU and RAM), EcoScale understands that <span class="text-emerald">different regions have different carbon footprints</span>. It suggests when to scale down, drain nodes, or shift capacity to greener regions — all without increasing your cloud bill.
+      </p>
+    </div>
+  </section>
+
+  <!-- Why -->
+  <section id="why" class="py-20 md:py-28">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Why EcoScale?</h2>
+      <p class="text-slate-400 max-w-3xl text-lg leading-relaxed mb-8">
+        Cloud emissions are a growing concern. A single data center can consume as much power as a small city. The grid mix — how much comes from solar, wind, hydro vs coal and gas — varies by region and time of day.
+      </p>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="p-6 rounded-xl bg-slate-800/50 border border-slate-700/50">
+          <h3 class="text-emerald font-semibold mb-2">The Problem</h3>
+          <p class="text-slate-400 text-sm">Kubernetes has no concept of carbon. It schedules pods wherever there's capacity, regardless of whether that region runs on coal or hydro.</p>
+        </div>
+        <div class="p-6 rounded-xl bg-slate-800/50 border border-slate-700/50">
+          <h3 class="text-emerald font-semibold mb-2">The Opportunity</h3>
+          <p class="text-slate-400 text-sm">us-west-2 (Oregon) is ~2–3× greener than us-east-1 (Virginia). Shifting non-critical workloads can cut emissions 20–30% without extra cost.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How -->
+  <section id="how" class="py-20 md:py-28 bg-slate-900/50">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">How Does It Work?</h2>
+      <p class="text-slate-400 max-w-3xl text-lg leading-relaxed mb-8">
+        One Helm chart. One label. That's it.
+      </p>
+      <ol class="space-y-4 max-w-2xl">
+        <li class="flex gap-4">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald/20 text-emerald flex items-center justify-center font-semibold">1</span>
+          <div><strong class="text-white">Install</strong> — Deploy EcoScale to your cluster with Helm in the kube-system namespace.</div>
+        </li>
+        <li class="flex gap-4">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald/20 text-emerald flex items-center justify-center font-semibold">2</span>
+          <div><strong class="text-white">Label</strong> — Add <code class="text-emerald text-sm">ecoscale/flexible: "true"</code> to workloads that can be rescheduled.</div>
+        </li>
+        <li class="flex gap-4">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald/20 text-emerald flex items-center justify-center font-semibold">3</span>
+          <div><strong class="text-white">Observe</strong> — EcoScale fetches carbon intensity, compares regions, and outputs recommendations via API and Prometheus metrics.</div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- For Whom -->
+  <section id="for-whom" class="py-20 md:py-28">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">For Whom?</h2>
+      <p class="text-slate-400 max-w-3xl text-lg leading-relaxed mb-12">
+        EcoScale is built for teams that run Kubernetes at scale and care about sustainability.
+      </p>
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="p-6 rounded-xl bg-slate-800/50 border border-slate-700/50 text-center">
+          <div class="w-12 h-12 rounded-full bg-emerald/20 flex items-center justify-center mx-auto mb-3"><svg class="w-6 h-6 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg></div>
+          <h3 class="text-white font-semibold mb-1">SREs</h3>
+          <p class="text-slate-400 text-sm">Reduce carbon without sacrificing reliability. Dry-run and safety interlocks built in.</p>
+        </div>
+        <div class="p-6 rounded-xl bg-slate-800/50 border border-slate-700/50 text-center">
+          <div class="w-12 h-12 rounded-full bg-emerald/20 flex items-center justify-center mx-auto mb-3"><svg class="w-6 h-6 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg></div>
+          <h3 class="text-white font-semibold mb-1">Platform Teams</h3>
+          <p class="text-slate-400 text-sm">Offer GreenOps as a platform capability. One Helm install, zero ops overhead.</p>
+        </div>
+        <div class="p-6 rounded-xl bg-slate-800/50 border border-slate-700/50 text-center">
+          <div class="w-12 h-12 rounded-full bg-emerald/20 flex items-center justify-center mx-auto mb-3"><svg class="w-6 h-6 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+          <h3 class="text-white font-semibold mb-1">FinOps</h3>
+          <p class="text-slate-400 text-sm">Cost-aware logic. We won't migrate if it costs 50% more. Balance carbon and spend.</p>
+        </div>
+        <div class="p-6 rounded-xl bg-slate-800/50 border border-slate-700/50 text-center">
+          <div class="w-12 h-12 rounded-full bg-emerald/20 flex items-center justify-center mx-auto mb-3"><svg class="w-6 h-6 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0h.5a2.5 2.5 0 002.5-2.5V8m0 0V5a2 2 0 012-2h2.945M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+          <h3 class="text-white font-semibold mb-1">Sustainability</h3>
+          <p class="text-slate-400 text-sm">Meet ESG goals. Report carbon savings. Show investors you're serious about green tech.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="py-20 md:py-28 bg-slate-900/50">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-3xl md:text-4xl font-bold text-white text-center mb-4">Built for the Future of Cloud</h2>
+      <p class="text-slate-400 text-center max-w-2xl mx-auto mb-16">Four pillars that make EcoScale the smartest way to run Kubernetes sustainably.</p>
+
+      <div class="grid md:grid-cols-2 gap-6 lg:gap-8">
+        <article class="group p-6 md:p-8 rounded-2xl bg-slate-800/50 border border-slate-700/50 hover:border-emerald/30 transition-all">
+          <div class="w-12 h-12 rounded-xl bg-emerald/20 flex items-center justify-center mb-4 group-hover:bg-emerald/30 transition-colors">
+            <svg class="w-6 h-6 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">Sun-Chaser Scaling</h3>
+          <p class="text-slate-400 leading-relaxed">Automatically shifts non-critical workloads to regions with peak renewable energy. When the sun shines in Oregon, your batch jobs run there.</p>
+        </article>
+        <article class="group p-6 md:p-8 rounded-2xl bg-slate-800/50 border border-slate-700/50 hover:border-emerald/30 transition-all">
+          <div class="w-12 h-12 rounded-xl bg-emerald/20 flex items-center justify-center mb-4 group-hover:bg-emerald/30 transition-colors">
+            <svg class="w-6 h-6 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">FinOps + GreenOps</h3>
+          <p class="text-slate-400 leading-relaxed">Smart logic that only moves workloads if it's cost-effective. We won't migrate you to a greener region if it costs 50% more.</p>
+        </article>
+        <article class="group p-6 md:p-8 rounded-2xl bg-slate-800/50 border border-slate-700/50 hover:border-emerald/30 transition-all">
+          <div class="w-12 h-12 rounded-xl bg-emerald/20 flex items-center justify-center mb-4 group-hover:bg-emerald/30 transition-colors">
+            <svg class="w-6 h-6 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">Zero Effort</h3>
+          <p class="text-slate-400 leading-relaxed">One Helm chart install. Mark workloads with <code class="text-emerald text-sm">ecoscale/flexible: true</code> and you're done.</p>
+        </article>
+        <article class="group p-6 md:p-8 rounded-2xl bg-slate-800/50 border border-slate-700/50 hover:border-emerald/30 transition-all">
+          <div class="w-12 h-12 rounded-xl bg-emerald/20 flex items-center justify-center mb-4 group-hover:bg-emerald/30 transition-colors">
+            <svg class="w-6 h-6 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+          <h3 class="text-xl font-semibold text-white mb-2">Enterprise Safety</h3>
+          <p class="text-slate-400 leading-relaxed">Built-in Dry-Run mode and safety interlocks for SREs. Never evicts more than 10% of pods per cycle. Protected workloads stay put.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Code Preview -->
+  <section class="py-20 md:py-28">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-3xl md:text-4xl font-bold text-white text-center mb-4">One Label. That's It.</h2>
+      <p class="text-slate-400 text-center max-w-2xl mx-auto mb-12">Add a single label to any Deployment or Pod. EcoScale handles the rest.</p>
+
+      <div class="max-w-2xl mx-auto">
+        <div class="rounded-xl overflow-hidden border border-slate-700/50 shadow-2xl">
+          <div class="flex items-center gap-2 px-4 py-3 bg-slate-800/80 border-b border-slate-700/50">
+            <span class="w-3 h-3 rounded-full bg-slate-600"></span>
+            <span class="w-3 h-3 rounded-full bg-slate-600"></span>
+            <span class="w-3 h-3 rounded-full bg-slate-600"></span>
+            <span class="ml-2 text-sm text-slate-500">batch-job.yaml</span>
+          </div>
+          <pre class="p-6 overflow-x-auto text-sm md:text-base"><code><span class="code-comment"># Mark this workload as carbon-flexible</span>
+<span class="code-comment"># EcoScale will consider it for Sun-Chaser scaling</span>
+<span class="code-key">apiVersion</span>: apps/v1
+<span class="code-key">kind</span>: Deployment
+<span class="code-key">metadata</span>:
+  <span class="code-key">name</span>: <span class="code-string">batch-processor</span>
+<span class="code-key">spec</span>:
+  <span class="code-key">template</span>:
+    <span class="code-key">metadata</span>:
+      <span class="code-key">labels</span>:
+        <span class="code-key">app</span>: <span class="code-string">batch-processor</span>
+        <span class="code-key">ecoscale/flexible</span>: <span class="code-string">"true"</span>  <span class="code-comment"># ← That's all you need</span>
+    <span class="code-key">spec</span>:
+      <span class="code-key">containers</span>:
+        - <span class="code-key">name</span>: <span class="code-string">processor</span>
+          <span class="code-key">image</span>: <span class="code-string">myapp:latest</span></code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GitHub Stats -->
+  <section id="github" class="py-20 md:py-28 bg-slate-900/50">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-3xl md:text-4xl font-bold text-white text-center mb-4">Open Source</h2>
+      <p class="text-slate-400 text-center max-w-2xl mx-auto mb-12">EcoScale is free and open source. Star us on GitHub, contribute, or just use it.</p>
+
+      <div class="flex flex-wrap justify-center gap-6 mb-8">
+        <a href="https://github.com/rahul-tarka/eco-scale-optimizer" target="_blank" rel="noopener" class="inline-flex items-center gap-3 px-6 py-4 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-emerald/30 transition-all">
+          <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          <div class="text-left">
+            <div class="text-white font-semibold">GitHub</div>
+            <div class="text-slate-400 text-sm">rahul-tarka/eco-scale-optimizer</div>
+          </div>
+        </a>
+        <div id="github-stats" class="flex flex-wrap justify-center gap-4">
+          <div class="flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+            <svg class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.828 1.48 8.279-7.416-3.967-7.417 3.967 1.481-8.279-6.064-5.828 8.332-1.151z"/></svg>
+            <span class="text-white font-semibold" id="stars">—</span>
+            <span class="text-slate-400 text-sm">Stars</span>
+          </div>
+          <div class="flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+            <svg class="w-5 h-5 text-emerald" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            <span class="text-white font-semibold" id="forks">—</span>
+            <span class="text-slate-400 text-sm">Forks</span>
+          </div>
+          <div class="flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800/50 border border-slate-700/50">
+            <svg class="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.27.098-2.65 0 0 .84-.27 2.75 1.026A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.296 2.747-1.027 2.747-1.027.546 1.381.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+            <span class="text-white font-semibold" id="contributors">—</span>
+            <span class="text-slate-400 text-sm">Contributors</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-20 md:py-28 bg-slate-900/50">
+    <div class="max-w-3xl mx-auto px-6 text-center">
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Ready to Green Your Cloud?</h2>
+      <p class="text-slate-400 mb-8">Join SREs and platform engineers on the waitlist.</p>
+      <form class="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto" id="waitlist-form-2">
+        <input type="email" name="email" placeholder="Enter your email" required
+          class="flex-1 px-4 py-3.5 rounded-lg bg-slate-800/80 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald/50 focus:border-emerald transition-all">
+        <button type="submit" class="px-6 py-3.5 rounded-lg bg-emerald hover:bg-emerald-dark font-semibold text-slate-950 transition-colors">
+          Join the Beta Waitlist
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-12 border-t border-slate-800">
+    <div class="max-w-6xl mx-auto px-6 text-center">
+      <p class="text-slate-500 text-sm">Built by an SRE for the Future.</p>
+      <p class="mt-1 text-slate-600 text-xs">© 2025 EcoScale. World's First Carbon-Aware Kubernetes Controller.</p>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelectorAll('#waitlist-form, #waitlist-form-2').forEach((form) => {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = form.querySelector('input[type="email"]').value;
+        alert('Thanks! We\'ll be in touch soon. ' + email + ' has been added to the waitlist.');
+      });
+    });
+
+    // GitHub API - fetch repo stats
+    fetch('https://api.github.com/repos/rahul-tarka/eco-scale-optimizer')
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('stars').textContent = data.stargazers_count ?? '—';
+        document.getElementById('forks').textContent = data.forks_count ?? '—';
+      })
+      .catch(() => {});
+
+    fetch('https://api.github.com/repos/rahul-tarka/eco-scale-optimizer/contributors?per_page=100')
+      .then(r => r.json())
+      .then(data => {
+        const count = Array.isArray(data) ? data.length : 0;
+        document.getElementById('contributors').textContent = count > 0 ? (count >= 100 ? '100+' : count) : '0';
+      })
+      .catch(() => { document.getElementById('contributors').textContent = '—'; });
+  </script>
+</body>
+</html>
