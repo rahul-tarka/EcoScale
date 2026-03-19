@@ -101,6 +101,28 @@ helm install ecoscale ./helm/ecoscale -n kube-system
 
 > **Note:** Build the Docker image first, or set `image.repository` and `image.tag` in values to your registry.
 
+### 4. Production: Live Carbon Data
+
+**Option A — CarbonIntensity.org.uk (free, UK zones):**
+```bash
+ECOSCALE_CARBON_API=carbonintensity ./bin/ecoscale
+```
+
+**Option B — ElectricityMaps (global, requires API key):**
+```bash
+ECOSCALE_CARBON_API=electricitymaps ECOSCALE_CARBON_API_KEY=your-key ./bin/ecoscale
+```
+
+### 5. Production: Enable Execution (optional)
+
+By default, EcoScale runs in **dry-run** mode (recommendations only). To execute pod evictions:
+
+```bash
+ECOSCALE_DRY_RUN=false ECOSCALE_ENABLE_EXECUTION=true ./bin/ecoscale
+```
+
+Safety limits apply: max 10% of flexible pods evicted per cycle; protected workloads (`ecoscale/protected=true`) are never evicted.
+
 ---
 
 ## Configuration
@@ -111,6 +133,11 @@ helm install ecoscale ./helm/ecoscale -n kube-system
 | `ECOSCALE_INTERVAL` | `5m` | Reconciliation interval |
 | `ECOSCALE_CARBON_THRESHOLD` | `350` | gCO2/kWh — above this, suggest scale-down |
 | `ECOSCALE_IN_CLUSTER` | `true` | Use in-cluster Kubernetes config |
+| `ECOSCALE_CARBON_API` | `mock` | Carbon data source: `mock` \| `carbonintensity` \| `electricitymaps` |
+| `ECOSCALE_CARBON_API_KEY` | — | ElectricityMaps API key (required when `ECOSCALE_CARBON_API=electricitymaps`) |
+| `ECOSCALE_DRY_RUN` | `true` | If `true`, only recommend; never execute evictions |
+| `ECOSCALE_ENABLE_EXECUTION` | `false` | If `true` and not dry-run, execute pod evictions |
+| `ECOSCALE_EVICTION_CAP_PCT` | `10` | Max % of flexible pods to evict per cycle (0–100) |
 
 ---
 
@@ -147,6 +174,17 @@ metadata:
 
 EcoScale will **only** consider these pods for scale-down or node-drain recommendations. System-critical pods (kube-system, DaemonSets) are never suggested for drain.
 
+### Protect Workloads from Eviction
+
+Add `ecoscale/protected: "true"` to workloads that must never be evicted:
+
+```yaml
+metadata:
+  labels:
+    ecoscale/flexible: "true"
+    ecoscale/protected: "true"   # Never evict, even when carbon is high
+```
+
 ---
 
 ## Project Structure
@@ -157,15 +195,23 @@ ecoscale/
 ├── internal/
 │   ├── carbon/
 │   │   ├── client.go             # Carbon intensity client (mock + interface)
+│   │   ├── carbonintensity.go    # CarbonIntensity.org.uk (free, UK)
+│   │   ├── electricitymaps.go    # ElectricityMaps (global, API key)
 │   │   └── types.go              # Intensity, RegionMapping
+│   ├── config/
+│   │   └── config.go             # Runtime config (dry-run, eviction cap, etc.)
+│   ├── executor/
+│   │   └── executor.go           # Pod eviction execution
 │   ├── kubernetes/
 │   │   └── analyzer.go           # Pod/node discovery via client-go
 │   ├── metrics/
 │   │   └── metrics.go            # Prometheus metrics
-│   └── optimizer/
-│       ├── engine.go             # Brain: threshold + Sun-Chaser
-│       ├── types.go              # Recommendation, RegionShiftRecommendation
-│       └── result.go             # Result struct
+│   ├── optimizer/
+│   │   ├── engine.go             # Brain: threshold + Sun-Chaser
+│   │   ├── types.go              # Recommendation, RegionShiftRecommendation
+│   │   └── result.go             # Result struct
+│   └── safety/
+│       └── limits.go             # Dry-run, eviction cap, protected workloads
 ├── helm/ecoscale/                # Helm chart for kube-system
 ├── Dockerfile
 ├── Makefile
@@ -174,9 +220,14 @@ ecoscale/
 
 ---
 
+## Production Features
+
+- [x] **Live Carbon API** — CarbonIntensity.org.uk (free, UK) and ElectricityMaps (global, API key)
+- [x] **Safety Layer** — Dry-run mode, 10% eviction cap, `ecoscale/protected=true`
+- [x] **Execution** — Pod eviction when `ECOSCALE_ENABLE_EXECUTION=true` and `ECOSCALE_DRY_RUN=false`
+
 ## Roadmap
 
-- [ ] **Live Carbon API** — CarbonIntensity.org.uk / ElectricityMaps integration
 - [ ] **Webhook Scheduler** — Intercept pod scheduling (not just recommendations)
 - [ ] **Multi-region Karpenter** — Auto-apply NodePool changes
 - [ ] **Carbon budget** — Enforce daily/weekly CO2 caps per namespace

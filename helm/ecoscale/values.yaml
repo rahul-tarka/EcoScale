@@ -37,6 +37,16 @@ resources:
 # Carbon threshold (gCO2/kWh) - above this, suggest scale-down
 carbonThreshold: 350
 
+# Carbon API: mock | carbonintensity | electricitymaps
+carbonApi: mock
+# ElectricityMaps API key (required when carbonApi=electricitymaps)
+carbonApiKey: ""
+
+# Safety: dry-run (recommendations only) by default
+dryRun: true
+enableExecution: false
+evictionCapPct: 10
+
 # Regions to compare for Sun-Chaser (greener region shift)
 compareRegions:
   - us-east-1

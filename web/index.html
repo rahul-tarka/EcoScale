@@ -129,11 +129,15 @@
         </li>
         <li class="flex gap-4">
           <span class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald/20 text-emerald flex items-center justify-center font-semibold">2</span>
-          <div><strong class="text-white">Label</strong> — Add <code class="text-emerald text-sm">ecoscale/flexible: "true"</code> to workloads that can be rescheduled.</div>
+          <div><strong class="text-white">Label</strong> — Add <code class="text-emerald text-sm">ecoscale/flexible: "true"</code> to workloads that can be rescheduled. Use <code class="text-emerald text-sm">ecoscale/protected: "true"</code> to never evict.</div>
         </li>
         <li class="flex gap-4">
           <span class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald/20 text-emerald flex items-center justify-center font-semibold">3</span>
-          <div><strong class="text-white">Observe</strong> — EcoScale fetches carbon intensity, compares regions, and outputs recommendations via API and Prometheus metrics.</div>
+          <div><strong class="text-white">Observe</strong> — EcoScale fetches live carbon intensity (CarbonIntensity.org.uk or ElectricityMaps), compares regions, and outputs recommendations via API and Prometheus metrics.</div>
+        </li>
+        <li class="flex gap-4">
+          <span class="flex-shrink-0 w-8 h-8 rounded-full bg-emerald/20 text-emerald flex items-center justify-center font-semibold">4</span>
+          <div><strong class="text-white">Execute</strong> — Optional: enable execution to evict pods during high-carbon periods. Dry-run and 10% eviction cap keep you safe.</div>
         </li>
       </ol>
     </div>
@@ -183,7 +187,7 @@
             <svg class="w-6 h-6 text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
           </div>
           <h3 class="text-xl font-semibold text-white mb-2">Sun-Chaser Scaling</h3>
-          <p class="text-slate-400 leading-relaxed">Automatically shifts non-critical workloads to regions with peak renewable energy. When the sun shines in Oregon, your batch jobs run there.</p>
+          <p class="text-slate-400 leading-relaxed">Automatically shifts non-critical workloads to regions with peak renewable energy. Live carbon data from CarbonIntensity.org.uk or ElectricityMaps.</p>
         </article>
         <article class="group p-6 md:p-8 rounded-2xl bg-slate-800/50 border border-slate-700/50 hover:border-emerald/30 transition-all">
           <div class="w-12 h-12 rounded-xl bg-emerald/20 flex items-center justify-center mb-4 group-hover:bg-emerald/30 transition-colors">
@@ -235,7 +239,7 @@
     <span class="code-key">metadata</span>:
       <span class="code-key">labels</span>:
         <span class="code-key">app</span>: <span class="code-string">batch-processor</span>
-        <span class="code-key">ecoscale/flexible</span>: <span class="code-string">"true"</span>  <span class="code-comment"># ← That's all you need</span>
+        <span class="code-key">ecoscale/flexible</span>: <span class="code-string">"true"</span>  <span class="code-comment"># ← That's all you need. Add ecoscale/protected: "true" to never evict.</span>
     <span class="code-key">spec</span>:
       <span class="code-key">containers</span>:
         - <span class="code-key">name</span>: <span class="code-string">processor</span>
