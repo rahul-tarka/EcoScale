@@ -7,8 +7,11 @@ metadata:
     {{- include "ecoscale.labels" . | nindent 4 }}
 rules:
   - apiGroups: [""]
-    resources: ["pods", "nodes"]
+    resources: ["pods"]
     verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch", "patch", "update"]
   # Required for pod eviction when ECOSCALE_ENABLE_EXECUTION=true
   - apiGroups: ["policy"]
     resources: ["pods/eviction"]

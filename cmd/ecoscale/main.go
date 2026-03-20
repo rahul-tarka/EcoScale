@@ -95,14 +95,17 @@ func main() {
 		slog.Info("execution disabled (dry-run or recommendations-only mode)")
 	}
 
+	compareRegions := parseCompareRegions(getEnv("ECOSCALE_COMPARE_REGIONS", ""))
 	engine := optimizer.NewEngine(carbonClient, analyzer, optimizer.Config{
 		CarbonThreshold:      cfg.CarbonThreshold,
-		CompareRegions:       []string{"us-east-1", "us-west-2"},
+		CompareRegions:       compareRegions,
 		DefaultCurrentRegion: "us-east-1",
 	})
 
 	mux := http.NewServeMux()
-	mux.Handle("/ui/", http.StripPrefix("/ui/", http.FileServer(http.Dir("ui"))))
+	mux.HandleFunc("/ui/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/ui", http.StatusFound)
+	})
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -130,9 +133,9 @@ func main() {
 		json.NewEncoder(w).Encode(map[string]any{
 			"name":                 "EcoScale",
 			"version":              "0.3.0",
-			"tagline":              "World's First Carbon-Aware Kubernetes Scheduler",
+			"tagline":              "Carbon-aware Kubernetes optimization controller",
 			"dashboard":            "/ui",
-			"dashboard_ui":         "/ui/",
+			"compare_regions":      compareRegions,
 			"carbon_api":           cfg.CarbonAPI,
 			"requested_carbon_api": cMode.Requested,
 			"effective_carbon_api": cMode.Effective,
@@ -157,7 +160,7 @@ func main() {
 		srv.Shutdown(context.Background())
 	}()
 
-	slog.Info("EcoScale started", "addr", addr, "interval", interval, "carbon_api", cfg.CarbonAPI, "dry_run", cfg.DryRun)
+	slog.Info("EcoScale started", "addr", addr, "interval", interval, "carbon_api", cfg.CarbonAPI, "dry_run", cfg.DryRun, "compare_regions", compareRegions)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		slog.Error("server error", "error", err)
 		os.Exit(1)
@@ -268,10 +271,10 @@ func runOnce(ctx context.Context, engine *optimizer.Engine, analyzer *kubernetes
 		pods, _ = analyzer.ListFlexiblePods(ctx)
 	}
 
-	filtered := safety.ApplySafetyLimits(cfg, pods, result.Recommendations)
+	recs := safety.ApplySafetyLimits(cfg, pods, result.Recommendations)
 
 	var totalCO2Saved float64
-	for _, r := range filtered {
+	for _, r := range recs {
 		metrics.RecommendationsTotal.WithLabelValues(string(r.Type)).Inc()
 		totalCO2Saved += r.CO2Savings
 	}
@@ -279,12 +282,13 @@ func runOnce(ctx context.Context, engine *optimizer.Engine, analyzer *kubernetes
 		metrics.CO2SavedTotal.Add(totalCO2Saved)
 	}
 
-	if exec != nil && safety.ShouldExecute(cfg) && len(filtered) > 0 {
-		n, err := exec.Execute(ctx, filtered)
+	budget := safety.MaxPodEvictions(cfg, pods)
+	if exec != nil && safety.ShouldExecute(cfg) && len(recs) > 0 && budget > 0 {
+		n, err := exec.Execute(ctx, recs, budget)
 		if err != nil {
 			slog.Error("execution failed", "error", err)
 		} else if n > 0 {
-			slog.Info("executed actions", "count", n)
+			slog.Info("executed pod evictions", "count", n, "budget", budget)
 		}
 	}
 
@@ -292,7 +296,7 @@ func runOnce(ctx context.Context, engine *optimizer.Engine, analyzer *kubernetes
 		"region", result.CurrentRegion,
 		"intensity", result.CurrentIntensity,
 		"recommendations", len(result.Recommendations),
-		"filtered", len(filtered),
+		"eviction_budget", budget,
 	)
 }
 
@@ -350,6 +354,25 @@ func parseFloat(s string) (float64, error) {
 	var f float64
 	_, err := fmt.Sscanf(s, "%f", &f)
 	return f, err
+}
+
+// parseCompareRegions parses ECOSCALE_COMPARE_REGIONS (comma-separated). Sun-Chaser needs at least two regions.
+func parseCompareRegions(s string) []string {
+	def := []string{"us-east-1", "us-west-2"}
+	if strings.TrimSpace(s) == "" {
+		return def
+	}
+	var out []string
+	for _, p := range strings.Split(s, ",") {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	if len(out) < 2 {
+		return def
+	}
+	return out
 }
 
 func getEnv(key, def string) string {

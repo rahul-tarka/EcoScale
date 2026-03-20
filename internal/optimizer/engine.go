@@ -73,32 +73,43 @@ func (e *Engine) RunWithThreshold(ctx context.Context, threshold float64) (*Resu
 	result.CurrentIntensity = intensity.Value
 	result.IntensitySource = "carbon"
 
-	// 3. High intensity? Suggest node-drain / scale-down for non-critical, non-protected pods
+	// 3. High intensity? Scale-down per flexible pod + one concrete node drain target
 	if intensity.Value > thresh {
 		pods, _ := e.listFlexiblePods(ctx)
+		nodeCounts := make(map[string]int)
 		for _, p := range pods {
 			if !p.Critical && !p.Protected && p.Phase == "Running" {
 				result.Recommendations = append(result.Recommendations, Recommendation{
-					Type:      ActionScaleDown,
-					Reason:    fmt.Sprintf("Carbon intensity %.0f gCO2/kWh exceeds threshold %.0f", intensity.Value, thresh),
-					Target:    fmt.Sprintf("%s/%s", p.Namespace, p.Name),
-					Details:   "Consider scaling down or deferring non-critical workload",
-					Priority:  1,
-					Timestamp: time.Now().UTC(),
+					Type:       ActionScaleDown,
+					Reason:     fmt.Sprintf("Carbon intensity %.0f gCO2/kWh exceeds threshold %.0f", intensity.Value, thresh),
+					Target:     fmt.Sprintf("%s/%s", p.Namespace, p.Name),
+					Details:    "Consider scaling down or deferring non-critical workload",
+					Priority:   1,
+					Timestamp:  time.Now().UTC(),
 					CO2Savings: estimateCO2Savings(intensity.Value, 1),
 				})
+				if p.NodeName != "" {
+					nodeCounts[p.NodeName]++
+				}
 			}
 		}
-		// Add node-drain suggestion if we have nodes with flexible pods
-		if len(pods) > 0 {
+		var bestNode string
+		var maxOnNode int
+		for n, c := range nodeCounts {
+			if c > maxOnNode {
+				maxOnNode = c
+				bestNode = n
+			}
+		}
+		if bestNode != "" {
 			result.Recommendations = append(result.Recommendations, Recommendation{
-				Type:      ActionNodeDrain,
-				Reason:    fmt.Sprintf("Carbon intensity %.0f gCO2/kWh exceeds threshold %.0f", intensity.Value, thresh),
-				Target:    "nodes with ecoscale/flexible pods",
-				Details:   "Consider draining nodes during high-carbon periods to reduce consumption",
-				Priority:  2,
-				Timestamp: time.Now().UTC(),
-				CO2Savings: estimateCO2Savings(intensity.Value, len(pods)),
+				Type:       ActionNodeDrain,
+				Reason:     fmt.Sprintf("Carbon intensity %.0f gCO2/kWh exceeds threshold %.0f", intensity.Value, thresh),
+				Target:     "node/" + bestNode,
+				Details:    fmt.Sprintf("Cordon node and evict flexible pods (densest node: %d eligible pods)", maxOnNode),
+				Priority:   2,
+				Timestamp:  time.Now().UTC(),
+				CO2Savings: estimateCO2Savings(intensity.Value, maxOnNode),
 			})
 		}
 	}

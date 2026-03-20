@@ -9,15 +9,14 @@ import (
 	"github.com/ecoscale/ecoscale/internal/optimizer"
 )
 
-// ApplySafetyLimits filters and caps recommendations based on config.
-// - When DryRun or !EnableExecution: returns recs unchanged (no execution will occur)
-// - When executing: caps evictions to EvictionCapPct of evictable pods
-func ApplySafetyLimits(cfg config.Config, pods []kubernetes.PodInfo, recs []optimizer.Recommendation) []optimizer.Recommendation {
-	if cfg.DryRun || !cfg.EnableExecution {
-		return recs // No execution; return all for display
-	}
+// ApplySafetyLimits returns recommendations unchanged. Eviction volume is enforced
+// per reconciliation by MaxPodEvictions inside the executor.
+func ApplySafetyLimits(_ config.Config, _ []kubernetes.PodInfo, recs []optimizer.Recommendation) []optimizer.Recommendation {
+	return recs
+}
 
-	// Count evictable pods (flexible, not protected, running)
+// MaxPodEvictions returns the maximum number of flexible pods to evict in one cycle.
+func MaxPodEvictions(cfg config.Config, pods []kubernetes.PodInfo) int {
 	evictableCount := 0
 	for _, p := range pods {
 		if p.Phase == "Running" && !p.Critical && !p.Protected {
@@ -25,28 +24,13 @@ func ApplySafetyLimits(cfg config.Config, pods []kubernetes.PodInfo, recs []opti
 		}
 	}
 	if evictableCount == 0 {
-		return recs
+		return 0
 	}
-
 	capCount := int(math.Ceil(float64(evictableCount) * cfg.EvictionCapPct / 100))
 	if capCount < 1 {
 		capCount = 1
 	}
-
-	// Filter scale_down and node_drain to cap evictions
-	filtered := make([]optimizer.Recommendation, 0, len(recs))
-	evictionCount := 0
-	for _, r := range recs {
-		if r.Type == optimizer.ActionScaleDown || r.Type == optimizer.ActionNodeDrain {
-			if evictionCount >= capCount {
-				continue
-			}
-			evictionCount++
-		}
-		filtered = append(filtered, r)
-	}
-
-	return filtered
+	return capCount
 }
 
 // ShouldExecute returns true if the system should execute (not just recommend).

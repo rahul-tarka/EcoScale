@@ -148,3 +148,15 @@ func isProtectedPod(p *corev1.Pod) bool {
 	}
 	return false
 }
+
+// EvictableCarbonPod reports whether a pod may be evicted for carbon optimization.
+func EvictableCarbonPod(p *corev1.Pod) bool {
+	if p.Status.Phase != corev1.PodRunning {
+		return false
+	}
+	if isCriticalPod(p) || isProtectedPod(p) {
+		return false
+	}
+	v, ok := p.Labels[FlexibleLabel]
+	return ok && v == FlexibleLabelValue
+}

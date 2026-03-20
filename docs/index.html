@@ -298,13 +298,13 @@ docker compose up</code></pre>
         </div>
         <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
           <span class="font-medium text-emerald">node_drain</span>
-          <p class="text-slate-400 text-sm mt-1">Consider draining nodes during high-carbon periods</p>
-          <p class="text-slate-500 text-xs mt-1">Target: nodes with ecoscale/flexible pods</p>
+          <p class="text-slate-400 text-sm mt-1">Cordon the densest node and evict eligible flexible pods when carbon is high</p>
+          <p class="text-slate-500 text-xs mt-1">Target: <code class="text-slate-400">node/&lt;name&gt;</code> (execution optional)</p>
         </div>
       </div>
 
       <div class="text-center">
-        <a href="ui/index.html" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-emerald hover:bg-emerald-dark font-semibold text-slate-950 transition-colors">
+        <a href="http://localhost:8080/ui" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-emerald hover:bg-emerald-dark font-semibold text-slate-950 transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           Open Dashboard
         </a>

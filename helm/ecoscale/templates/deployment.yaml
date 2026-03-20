@@ -49,10 +49,14 @@ spec:
           env:
             - name: ECOSCALE_ADDR
               value: ":{{ .Values.service.port }}"
+            - name: ECOSCALE_IN_CLUSTER
+              value: "true"
             - name: ECOSCALE_INTERVAL
               value: {{ .Values.interval | quote }}
             - name: ECOSCALE_CARBON_THRESHOLD
               value: {{ .Values.carbonThreshold | quote }}
+            - name: ECOSCALE_COMPARE_REGIONS
+              value: {{ join "," .Values.compareRegions | quote }}
             - name: ECOSCALE_CARBON_API
               value: {{ .Values.carbonApi | default "mock" | quote }}
             - name: ECOSCALE_CARBON_API_KEY

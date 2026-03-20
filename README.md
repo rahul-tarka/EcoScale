@@ -68,12 +68,12 @@ When your cluster runs in a high-carbon region, EcoScale outputs:
 
 ## Dashboard
 
-Two UI entry points when EcoScale is running:
+Single embedded UI (smaller image, no extra static tree):
 
 | URL | Description |
 |-----|-------------|
-| **http://localhost:8080/ui** | Full Carbon-Aware Dashboard (embedded): multi-region comparison, What-If calculator, threshold slider, one-click copy for Karpenter/CA |
-| **http://localhost:8080/ui/** | Classic self-hosted UI (`ui/index.html`): region, intensity, recommendations; auto-refresh every 30s; configurable API URL for remote instances |
+| **http://localhost:8080/ui** | Carbon-Aware Dashboard: multi-region comparison, What-If calculator, threshold slider, Karpenter/CA snippets |
+| **http://localhost:8080/ui/** | Redirects to `/ui` |
 
 ## Website
 
@@ -160,7 +160,7 @@ By default, EcoScale runs in **dry-run** mode (recommendations only). To execute
 ECOSCALE_DRY_RUN=false ECOSCALE_ENABLE_EXECUTION=true ./bin/ecoscale
 ```
 
-Safety limits apply: max 10% of flexible pods evicted per cycle; protected workloads (`ecoscale/protected=true`) are never evicted.
+Safety limits apply: **at most** `ECOSCALE_EVICTION_CAP_PCT`% of *running, flexible, non-protected* pods may be **evicted per reconciliation** (shared budget across scale-down and node drain). Execution order: **node drain first** (cordon + evict eligible pods on the densest node), then individual scale-down targets. Protected workloads (`ecoscale/protected=true`), `kube-system`, and DaemonSet pods are never evicted. **Region shift** remains advisory only (no auto-apply).
 
 ---
 
@@ -171,12 +171,13 @@ Safety limits apply: max 10% of flexible pods evicted per cycle; protected workl
 | `ECOSCALE_ADDR` | `:8080` | HTTP listen address |
 | `ECOSCALE_INTERVAL` | `5m` | Reconciliation interval |
 | `ECOSCALE_CARBON_THRESHOLD` | `350` | gCO2/kWh — above this, suggest scale-down |
+| `ECOSCALE_COMPARE_REGIONS` | `us-east-1,us-west-2` | Comma-separated regions for Sun-Chaser (needs ≥2) |
 | `ECOSCALE_IN_CLUSTER` | `true` | Use in-cluster Kubernetes config |
 | `ECOSCALE_CARBON_API` | `mock` | Carbon data source: `mock` \| `carbonintensity` \| `electricitymaps` |
 | `ECOSCALE_CARBON_API_KEY` | — | ElectricityMaps API key (required when `ECOSCALE_CARBON_API=electricitymaps`) |
 | `ECOSCALE_DRY_RUN` | `true` | If `true`, only recommend; never execute evictions |
 | `ECOSCALE_ENABLE_EXECUTION` | `false` | If `true` and not dry-run, execute pod evictions |
-| `ECOSCALE_EVICTION_CAP_PCT` | `10` | Max % of flexible pods to evict per cycle (0–100) |
+| `ECOSCALE_EVICTION_CAP_PCT` | `10` | Max % of evictable flexible pods to evict per cycle (0–100); applies to total pod evictions |
 
 ---
 
@@ -186,8 +187,8 @@ Safety limits apply: max 10% of flexible pods evicted per cycle; protected workl
 |----------|-------------|
 | `GET /` | API info (`is_live_data`, `effective_carbon_api`, …) |
 | `GET /api/status` | Demo vs live + banner text for the dashboard |
-| `GET /ui` | Carbon-Aware Dashboard (embedded): regions, What-If, threshold slider |
-| `GET /ui/` | Classic dashboard (`ui/index.html`) |
+| `GET /ui` | Carbon-Aware Dashboard (embedded) |
+| `GET /ui/...` | Redirects to `/ui` |
 | `GET /health` | Health check |
 | `GET /metrics` | Prometheus metrics |
 | `GET /recommendations` | Live optimization recommendations (JSON). Query: `?threshold=350` |
@@ -269,8 +270,8 @@ ecoscale/
 ## Production Features
 
 - [x] **Live Carbon API** — CarbonIntensity.org.uk (free, UK) and ElectricityMaps (global, API key)
-- [x] **Safety Layer** — Dry-run mode, 10% eviction cap, `ecoscale/protected=true`
-- [x] **Execution** — Pod eviction when `ECOSCALE_ENABLE_EXECUTION=true` and `ECOSCALE_DRY_RUN=false`
+- [x] **Safety Layer** — Dry-run by default, configurable eviction cap (`ECOSCALE_EVICTION_CAP_PCT`), `ecoscale/protected=true`
+- [x] **Execution** — Pod eviction + node cordon/drain (eligible pods only) when `ECOSCALE_ENABLE_EXECUTION=true` and `ECOSCALE_DRY_RUN=false`; RBAC includes `nodes` patch/update
 
 ## Roadmap
 
