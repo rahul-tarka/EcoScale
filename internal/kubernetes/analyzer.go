@@ -17,6 +17,8 @@ const (
 	FlexibleLabelValue = "true"
 	// FlexibleSelector is the label selector for flexible pods.
 	FlexibleSelector = "ecoscale/flexible=true"
+	// ProtectedLabel marks pods that must never be evicted or drained.
+	ProtectedLabel = "ecoscale/protected"
 )
 
 // PodInfo holds summarized information about a flexible pod.
@@ -26,6 +28,7 @@ type PodInfo struct {
 	NodeName  string
 	Phase     corev1.PodPhase
 	Critical  bool
+	Protected bool // ecoscale/protected=true - never evict
 }
 
 // Analyzer discovers and analyzes pods eligible for carbon-aware scheduling.
@@ -60,12 +63,14 @@ func (a *Analyzer) ListFlexiblePods(ctx context.Context) ([]PodInfo, error) {
 	out := make([]PodInfo, 0, len(list.Items))
 	for _, p := range list.Items {
 		critical := isCriticalPod(&p)
+		protected := isProtectedPod(&p)
 		out = append(out, PodInfo{
 			Name:      p.Name,
 			Namespace: p.Namespace,
 			NodeName:  p.Spec.NodeName,
 			Phase:     p.Status.Phase,
 			Critical:  critical,
+			Protected: protected,
 		})
 	}
 	return out, nil
@@ -84,12 +89,14 @@ func (a *Analyzer) ListFlexiblePodsInNamespace(ctx context.Context, namespace st
 	out := make([]PodInfo, 0, len(list.Items))
 	for _, p := range list.Items {
 		critical := isCriticalPod(&p)
+		protected := isProtectedPod(&p)
 		out = append(out, PodInfo{
 			Name:      p.Name,
 			Namespace: p.Namespace,
 			NodeName:  p.Spec.NodeName,
 			Phase:     p.Status.Phase,
 			Critical:  critical,
+			Protected: protected,
 		})
 	}
 	return out, nil
@@ -130,6 +137,14 @@ func isCriticalPod(p *corev1.Pod) bool {
 		if o.Kind == "DaemonSet" {
 			return true
 		}
+	}
+	return false
+}
+
+// isProtectedPod returns true if the pod has ecoscale/protected=true.
+func isProtectedPod(p *corev1.Pod) bool {
+	if v, ok := p.Labels[ProtectedLabel]; ok && v == "true" {
+		return true
 	}
 	return false
 }

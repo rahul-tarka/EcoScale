@@ -73,11 +73,11 @@ func (e *Engine) RunWithThreshold(ctx context.Context, threshold float64) (*Resu
 	result.CurrentIntensity = intensity.Value
 	result.IntensitySource = "carbon"
 
-	// 3. High intensity? Suggest node-drain / scale-down for non-critical pods
+	// 3. High intensity? Suggest node-drain / scale-down for non-critical, non-protected pods
 	if intensity.Value > thresh {
 		pods, _ := e.listFlexiblePods(ctx)
 		for _, p := range pods {
-			if !p.Critical && p.Phase == "Running" {
+			if !p.Critical && !p.Protected && p.Phase == "Running" {
 				result.Recommendations = append(result.Recommendations, Recommendation{
 					Type:      ActionScaleDown,
 					Reason:    fmt.Sprintf("Carbon intensity %.0f gCO2/kWh exceeds threshold %.0f", intensity.Value, thresh),

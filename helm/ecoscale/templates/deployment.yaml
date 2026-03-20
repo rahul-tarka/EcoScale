@@ -53,6 +53,16 @@ spec:
               value: {{ .Values.interval | quote }}
             - name: ECOSCALE_CARBON_THRESHOLD
               value: {{ .Values.carbonThreshold | quote }}
+            - name: ECOSCALE_CARBON_API
+              value: {{ .Values.carbonApi | default "mock" | quote }}
+            - name: ECOSCALE_CARBON_API_KEY
+              value: {{ .Values.carbonApiKey | quote }}
+            - name: ECOSCALE_DRY_RUN
+              value: {{ .Values.dryRun | default true | quote }}
+            - name: ECOSCALE_ENABLE_EXECUTION
+              value: {{ .Values.enableExecution | default false | quote }}
+            - name: ECOSCALE_EVICTION_CAP_PCT
+              value: {{ .Values.evictionCapPct | default 10 | quote }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
