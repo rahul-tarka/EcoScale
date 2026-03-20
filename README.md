@@ -62,9 +62,19 @@ When your cluster runs in a high-carbon region, EcoScale outputs:
 
 ---
 
+## Dashboard
+
+A self-hosted UI dashboard lives in `ui/index.html`. When you run EcoScale, open **http://localhost:8080/ui/** to view:
+
+- Current region and carbon intensity
+- Recommendations (scale-down, node-drain, region-shift)
+- Sun-Chaser region comparison
+
+The dashboard auto-refreshes every 30 seconds. You can also change the API URL to point to a remote EcoScale instance.
+
 ## Website
 
-A product website lives in `web/index.html` (and `docs/index.html` for GitHub Pages) with What, Why, How, For Whom, Features, and live GitHub stats (stars, forks, contributors). To host on GitHub Pages:
+A product website lives in `web/index.html` (and `docs/index.html` for GitHub Pages) with What, Why, How, For Whom, Features, Live Demo, and GitHub stats. To host on GitHub Pages:
 
 1. In repo **Settings → Pages**, set Source to **Deploy from a branch**
 2. Branch: `main`, Folder: **`/docs`**
@@ -145,6 +155,7 @@ Safety limits apply: max 10% of flexible pods evicted per cycle; protected workl
 
 | Endpoint | Description |
 |----------|-------------|
+| `GET /ui/` | Dashboard UI (region, intensity, recommendations) |
 | `GET /` | API info |
 | `GET /health` | Health check |
 | `GET /metrics` | Prometheus metrics |
