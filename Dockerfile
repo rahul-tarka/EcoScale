@@ -26,6 +26,7 @@ RUN apk add --no-cache ca-certificates tzdata
 WORKDIR /
 
 COPY --from=builder /ecoscale /ecoscale
+COPY --from=builder /app/ui /ui
 
 # Run as non-root
 RUN adduser -D -g '' ecoscale
