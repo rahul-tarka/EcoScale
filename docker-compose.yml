@@ -1,0 +1,13 @@
+# Compose reads `.env` in this folder for ${VAR} substitution (optional).
+# Default = demo/mock data. Live data: see README "Live carbon in 4 steps or less".
+services:
+  ecoscale:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      ECOSCALE_IN_CLUSTER: "false"
+      ECOSCALE_CARBON_THRESHOLD: "350"
+      ECOSCALE_INTERVAL: "1m"
+      ECOSCALE_CARBON_API: ${ECOSCALE_CARBON_API:-mock}
+      ECOSCALE_CARBON_API_KEY: ${ECOSCALE_CARBON_API_KEY:-}

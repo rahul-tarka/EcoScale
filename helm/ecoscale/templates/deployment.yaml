@@ -53,6 +53,10 @@ spec:
               value: {{ .Values.interval | quote }}
             - name: ECOSCALE_CARBON_THRESHOLD
               value: {{ .Values.carbonThreshold | quote }}
+            - name: ECOSCALE_IN_CLUSTER
+              value: "true"
+            - name: ECOSCALE_CARBON_API
+              value: {{ .Values.carbonAPI | quote }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

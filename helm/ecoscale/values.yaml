@@ -37,6 +37,9 @@ resources:
 # Carbon threshold (gCO2/kWh) - above this, suggest scale-down
 carbonThreshold: 350
 
+# Carbon data: mock | carbonintensity | electricitymaps (set ECOSCALE_CARBON_API_KEY via extraEnv if needed)
+carbonAPI: mock
+
 # Regions to compare for Sun-Chaser (greener region shift)
 compareRegions:
   - us-east-1

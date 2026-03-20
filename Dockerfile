@@ -6,10 +6,7 @@ WORKDIR /app
 # Install build dependencies
 RUN apk add --no-cache git ca-certificates
 
-# Copy go mod files first for better layer caching
-COPY go.mod ./
-
-# Download dependencies (go.sum created if missing)
+COPY go.mod go.sum ./
 RUN go mod download
 
 # Copy source
@@ -19,7 +16,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o /ecoscale ./cmd/ecoscale
 
 # Runtime stage
-FROM alpine:3.19
+FROM alpine:3.18
 
 RUN apk add --no-cache ca-certificates tzdata
 

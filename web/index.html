@@ -52,6 +52,7 @@
       <a href="#how" class="text-slate-400 hover:text-emerald transition-colors">How</a>
       <a href="#for-whom" class="text-slate-400 hover:text-emerald transition-colors">For Whom</a>
       <a href="#features" class="text-slate-400 hover:text-emerald transition-colors">Features</a>
+      <a href="#try-dashboard" class="text-emerald hover:text-emerald-light transition-colors font-medium">Try Dashboard</a>
       <a href="#github" class="text-slate-400 hover:text-emerald transition-colors">GitHub</a>
     </div>
   </nav>
@@ -81,6 +82,21 @@
       <p class="mt-3 text-sm text-slate-500">No spam. Early access only.</p>
     </section>
   </header>
+
+  <!-- Try Dashboard + demo vs live -->
+  <section id="try-dashboard" class="py-16 md:py-20 border-t border-slate-800/50">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-2xl md:text-3xl font-bold text-white mb-3">Run the dashboard locally</h2>
+      <p class="text-slate-400 max-w-3xl mb-4">
+        <strong class="text-amber-400">Default = demo data</strong> (no API key). The UI shows a clear <strong class="text-white">Demo vs Live</strong> banner.
+        For <strong class="text-emerald">real grid data</strong> in <strong class="text-white">3–4 steps</strong>, see the README on GitHub.
+      </p>
+      <pre class="p-4 rounded-xl bg-slate-800/80 border border-slate-700 text-emerald text-sm overflow-x-auto max-w-2xl mb-3"><code>git clone https://github.com/rahul-tarka/eco-scale-optimizer.git && cd eco-scale-optimizer
+docker compose up</code></pre>
+      <p class="text-slate-400 text-sm mb-2">Then open <a href="http://localhost:8080/ui" class="text-emerald hover:underline" target="_blank" rel="noopener">http://localhost:8080/ui</a></p>
+      <p class="text-slate-500 text-sm"><strong class="text-slate-400">Live UK grid (free, no key):</strong> <code class="text-emerald text-xs">printf 'ECOSCALE_CARBON_API=carbonintensity\n' &gt; .env</code> then <code class="text-emerald text-xs">docker compose up</code> — <a href="https://github.com/rahul-tarka/eco-scale-optimizer/blob/main/README.md#live-carbon-in-4-steps-or-less" class="text-emerald hover:underline" target="_blank" rel="noopener">full instructions →</a></p>
+    </div>
+  </section>
 
   <!-- What -->
   <section id="what" class="py-20 md:py-28 bg-slate-900/50">

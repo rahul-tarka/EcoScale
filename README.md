@@ -1,9 +1,12 @@
 # EcoScale — World's First Carbon-Aware Kubernetes Controller
 
-> **GreenOps for Kubernetes.** EcoScale intercepts scheduling decisions based on real-time carbon intensity (CO2 per kWh) of cloud regions, enabling workloads to chase the sun and reduce cloud carbon footprint.
+> **GreenOps for Kubernetes.** EcoScale uses carbon intensity (CO₂ per kWh) by region to recommend scale-down, node-drain, and region-shift — so workloads can chase greener grids.
 
 [![Go 1.22+](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
+
+> **Important — what you see on the dashboard**  
+> By default EcoScale uses **demo (mock) data** so you can run it with **zero signup**. The UI shows a **Demo vs Live** banner at the top. For **real grid data**, follow [**Live carbon in 4 steps or less**](#live-carbon-in-4-steps-or-less) below.
 
 ---
 
@@ -11,95 +14,62 @@
 
 **Traditional Kubernetes schedulers only care about CPU and RAM.** They have no concept of:
 
-- **Carbon intensity** — How much CO2 is emitted per kWh in the region powering your cluster
-- **Time-of-day** — Solar peaks, wind patterns, and grid mix vary by hour
-- **Region comparison** — us-west-2 (hydro-heavy) can be 2–3× greener than us-east-1 (fossil-heavy)
+- **Carbon intensity** — CO₂ emitted per kWh in the region powering your cluster  
+- **Time-of-day** — Grid mix changes by hour  
+- **Region comparison** — e.g. us-west-2 can be much greener than us-east-1  
 
-EcoScale is the **first controller** that:
+EcoScale:
 
-1. **Fetches real-time carbon intensity** from CarbonIntensity.org.uk / ElectricityMaps
-2. **Labels flexible workloads** — Only workloads with `ecoscale/flexible=true` are considered
-3. **Recommends actions** — Scale-down, node-drain, or region-shift when intensity exceeds threshold
-4. **Sun-Chaser logic** — Compares regions (e.g., us-east-1 vs us-west-2) and suggests Karpenter/Cluster Autoscaler config to shift capacity to the greener region
-
----
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                          EcoScale Controller                             │
-├─────────────────────────────────────────────────────────────────────────┤
-│  internal/carbon/client.go     → Carbon intensity API (mock / live)      │
-│  internal/kubernetes/analyzer → List pods with ecoscale/flexible=true   │
-│  internal/optimizer/engine.go → Brain: threshold + Sun-Chaser logic     │
-└─────────────────────────────────────────────────────────────────────────┘
-         │                    │                         │
-         ▼                    ▼                         ▼
-   CarbonIntensity.org   Kubernetes API           Prometheus /metrics
-   ElectricityMaps      (pods, nodes)             CO2_Saved_Total
-```
-
-### Core Components
-
-| Component | Purpose |
-|-----------|---------|
-| `internal/carbon/client.go` | Fetches carbon intensity by region. Mock client included; pluggable for CarbonIntensity.org.uk or ElectricityMaps. |
-| `internal/kubernetes/analyzer.go` | Uses client-go to list pods with `ecoscale/flexible=true`. Detects cluster region from node labels. |
-| `internal/optimizer/engine.go` | **The brain.** If intensity > threshold → suggest scale-down/node-drain. Sun-Chaser: compare regions, suggest Karpenter/Cluster Autoscaler config to shift to greener region. |
-
-### Sun-Chaser (Unique Feature)
-
-EcoScale compares carbon intensity between regions (e.g., **us-east-1** vs **us-west-2**):
-
-- **us-west-2** (Oregon) — Hydro-dominated grid, ~180 gCO2/kWh
-- **us-east-1** (Virginia) — Fossil-heavy, ~420 gCO2/kWh
-
-When your cluster runs in a high-carbon region, EcoScale outputs:
-
-- **Karpenter NodePool** YAML targeting the greener region
-- **Cluster Autoscaler** guidance for multi-region scaling
+1. Fetches carbon intensity (mock, **CarbonIntensity.org.uk**, or **ElectricityMaps**)  
+2. Labels flexible workloads with `ecoscale/flexible=true`  
+3. Recommends scale-down, node-drain, or region-shift when intensity is high  
+4. **Sun-Chaser** — compares regions and suggests Karpenter / Cluster Autoscaler style config  
 
 ---
 
-## Website
-
-A product website lives in `web/index.html` (and `docs/index.html` for GitHub Pages) with What, Why, How, For Whom, Features, and live GitHub stats (stars, forks, contributors). To host on GitHub Pages:
-
-1. In repo **Settings → Pages**, set Source to **Deploy from a branch**
-2. Branch: `main`, Folder: **`/docs`**
-3. Site will be live at `https://rahul-tarka.github.io/eco-scale-optimizer/`
-
-To preview locally: `cd web && python3 -m http.server 8000` then open http://localhost:8000
-
----
-
-## Quick Start
-
-### 1. Build & Run (Standalone)
+## Quick Start (Docker — 2 commands, demo data)
 
 ```bash
-# Build
+git clone https://github.com/rahul-tarka/eco-scale-optimizer.git && cd eco-scale-optimizer
+docker compose up
+```
+
+Open **http://localhost:8080/ui** — dashboard with **demo** carbon numbers (banner explains this).
+
+- **http://localhost:8080/** — JSON API info (`requested_carbon_api`, `effective_carbon_api`, `is_live_data`)  
+- **http://localhost:8080/api/status** — same details for tools/automation  
+
+---
+
+## Live carbon in 4 steps or less
+
+### Option A — UK grid, **free**, **no API key** (3 steps)
+
+Uses [CarbonIntensity.org.uk](https://carbonintensity.org.uk/) (UK regional data). Cloud regions are mapped to UK zones where possible — good for a **real** signal without signup.
+
+```bash
+git clone https://github.com/rahul-tarka/eco-scale-optimizer.git && cd eco-scale-optimizer
+printf 'ECOSCALE_CARBON_API=carbonintensity\n' > .env
+docker compose up
+```
+
+Open **http://localhost:8080/ui** — banner should say **Live grid data**.
+
+### Option B — Global zones, **ElectricityMaps** (4 steps)
+
+1. Create a free API token at [ElectricityMaps](https://www.electricitymaps.com/) (developer / app dashboard).  
+2. `git clone https://github.com/rahul-tarka/eco-scale-optimizer.git && cd eco-scale-optimizer`  
+3. `cp .env.example .env` — set `ECOSCALE_CARBON_API=electricitymaps` and `ECOSCALE_CARBON_API_KEY=<your token>`.  
+4. `docker compose up` → **http://localhost:8080/ui**  
+
+### Run locally without Docker (live)
+
+```bash
 make build
-
-# Run (no Kubernetes required for mock mode)
-ECOSCALE_IN_CLUSTER=false ./bin/ecoscale
+ECOSCALE_IN_CLUSTER=false ECOSCALE_CARBON_API=carbonintensity ./bin/ecoscale
+# or
+ECOSCALE_IN_CLUSTER=false ECOSCALE_CARBON_API=electricitymaps ECOSCALE_CARBON_API_KEY=your_key ./bin/ecoscale
 ```
-
-### 2. Docker
-
-```bash
-docker build -t ecoscale:0.1.0 .
-docker run -p 8080:8080 ecoscale:0.1.0
-```
-
-### 3. Helm (Deploy to kube-system)
-
-```bash
-helm install ecoscale ./helm/ecoscale -n kube-system
-```
-
-> **Note:** Build the Docker image first, or set `image.repository` and `image.tag` in values to your registry.
 
 ---
 
@@ -109,8 +79,10 @@ helm install ecoscale ./helm/ecoscale -n kube-system
 |---------|---------|-------------|
 | `ECOSCALE_ADDR` | `:8080` | HTTP listen address |
 | `ECOSCALE_INTERVAL` | `5m` | Reconciliation interval |
-| `ECOSCALE_CARBON_THRESHOLD` | `350` | gCO2/kWh — above this, suggest scale-down |
-| `ECOSCALE_IN_CLUSTER` | `true` | Use in-cluster Kubernetes config |
+| `ECOSCALE_CARBON_THRESHOLD` | `350` | gCO₂/kWh — above this, suggest scale-down / drain |
+| `ECOSCALE_IN_CLUSTER` | `true` | In-cluster Kubernetes config |
+| `ECOSCALE_CARBON_API` | `mock` | `mock` \| `carbonintensity` \| `electricitymaps` |
+| `ECOSCALE_CARBON_API_KEY` | — | Required when `ECOSCALE_CARBON_API=electricitymaps` |
 
 ---
 
@@ -118,26 +90,42 @@ helm install ecoscale ./helm/ecoscale -n kube-system
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /` | API info |
+| `GET /` | API info + carbon backend summary |
+| `GET /api/status` | Demo vs live, messages for the dashboard banner |
+| `GET /ui` | Carbon-Aware Dashboard |
 | `GET /health` | Health check |
 | `GET /metrics` | Prometheus metrics |
-| `GET /recommendations` | Live optimization recommendations (JSON) |
+| `GET /recommendations` | Recommendations JSON (`?threshold=350`) |
+| `GET /api/regions?regions=us-east-1,us-west-2` | Multi-region intensities |
 
-### Prometheus Metrics
+---
 
-| Metric | Type | Description |
-|--------|------|-------------|
-| `ecoscale_co2_saved_total` | Counter | Total estimated CO2 saved (grams) |
-| `ecoscale_carbon_intensity_gco2_per_kwh` | Gauge | Current region carbon intensity |
-| `ecoscale_recommendations_total` | Counter | Recommendations by type |
-| `ecoscale_reconciliation_runs_total` | Counter | Reconciliation cycles |
-| `ecoscale_reconciliation_errors_total` | Counter | Failed cycles |
+## Build & Helm
+
+```bash
+make build
+ECOSCALE_IN_CLUSTER=false ./bin/ecoscale
+```
+
+```bash
+docker build -t ecoscale:0.3.0 .
+docker run -p 8080:8080 -e ECOSCALE_IN_CLUSTER=false ecoscale:0.3.0
+```
+
+```bash
+helm install ecoscale ./helm/ecoscale -n kube-system
+```
+
+---
+
+## Website (GitHub Pages)
+
+Product site: `web/index.html` and `docs/index.html`.  
+Settings → Pages → branch `main`, folder **`/docs`**.
 
 ---
 
 ## Mark Workloads as Carbon-Flexible
-
-Add the label to pods that can be rescheduled or scaled based on carbon:
 
 ```yaml
 metadata:
@@ -145,48 +133,26 @@ metadata:
     ecoscale/flexible: "true"
 ```
 
-EcoScale will **only** consider these pods for scale-down or node-drain recommendations. System-critical pods (kube-system, DaemonSets) are never suggested for drain.
-
 ---
 
 ## Project Structure
 
 ```
 ecoscale/
-├── cmd/ecoscale/main.go          # Entrypoint, HTTP server, reconciliation loop
-├── internal/
-│   ├── carbon/
-│   │   ├── client.go             # Carbon intensity client (mock + interface)
-│   │   └── types.go              # Intensity, RegionMapping
-│   ├── kubernetes/
-│   │   └── analyzer.go           # Pod/node discovery via client-go
-│   ├── metrics/
-│   │   └── metrics.go            # Prometheus metrics
-│   └── optimizer/
-│       ├── engine.go             # Brain: threshold + Sun-Chaser
-│       ├── types.go              # Recommendation, RegionShiftRecommendation
-│       └── result.go             # Result struct
-├── helm/ecoscale/                # Helm chart for kube-system
-├── Dockerfile
-├── Makefile
-└── README.md
+├── cmd/ecoscale/main.go
+├── cmd/ecoscale/web/dashboard.html   # embedded dashboard
+├── internal/carbon/                  # mock, carbonintensity, electricitymaps
+├── internal/kubernetes/
+├── internal/optimizer/
+├── docker-compose.yml
+├── .env.example
+└── helm/ecoscale/
 ```
-
----
-
-## Roadmap
-
-- [ ] **Live Carbon API** — CarbonIntensity.org.uk / ElectricityMaps integration
-- [ ] **Webhook Scheduler** — Intercept pod scheduling (not just recommendations)
-- [ ] **Multi-region Karpenter** — Auto-apply NodePool changes
-- [ ] **Carbon budget** — Enforce daily/weekly CO2 caps per namespace
 
 ---
 
 ## License
 
 Apache 2.0
-
----
 
 **EcoScale — Building the future of Green Computing.**
