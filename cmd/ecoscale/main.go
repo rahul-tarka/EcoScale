@@ -34,6 +34,12 @@ const (
 	defaultCarbonThreshold = 350
 )
 
+// carbonMode tracks requested vs effective carbon backend (e.g. EM without key → mock).
+type carbonMode struct {
+	Requested string `json:"requested_carbon_api"`
+	Effective string `json:"effective_carbon_api"`
+}
+
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	slog.SetDefault(logger)
@@ -49,11 +55,9 @@ func main() {
 	interval := getDurationEnv("ECOSCALE_INTERVAL", defaultInterval)
 	inCluster := getEnv("ECOSCALE_IN_CLUSTER", "true") == "true"
 
-	// Carbon client: mock | carbonintensity | electricitymaps
-	carbonClient := newCarbonClient(cfg)
-	slog.Info("carbon client", "api", cfg.CarbonAPI)
+	carbonClient, cMode := newCarbonClientFromCfg(cfg)
+	slog.Info("carbon backend", "requested", cMode.Requested, "effective", cMode.Effective)
 
-	// Kubernetes client
 	var k8sConfig *rest.Config
 	var analyzer *kubernetes.Analyzer
 	if inCluster {
@@ -78,7 +82,6 @@ func main() {
 		}
 	}
 
-	// Executor (only when execution enabled)
 	var exec *executor.Executor
 	if safety.ShouldExecute(cfg) && k8sConfig != nil {
 		var err error
@@ -93,12 +96,11 @@ func main() {
 	}
 
 	engine := optimizer.NewEngine(carbonClient, analyzer, optimizer.Config{
-		CarbonThreshold:       cfg.CarbonThreshold,
-		CompareRegions:        []string{"us-east-1", "us-west-2"},
-		DefaultCurrentRegion:  "us-east-1",
+		CarbonThreshold:      cfg.CarbonThreshold,
+		CompareRegions:       []string{"us-east-1", "us-west-2"},
+		DefaultCurrentRegion: "us-east-1",
 	})
 
-	// HTTP server
 	mux := http.NewServeMux()
 	mux.Handle("/ui/", http.StripPrefix("/ui/", http.FileServer(http.Dir("ui"))))
 	mux.Handle("/metrics", promhttp.Handler())
@@ -106,6 +108,7 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok"}`))
 	})
+	mux.HandleFunc("/api/status", statusHandler(cMode, cfg.CarbonThreshold))
 	mux.HandleFunc("/ui", func(w http.ResponseWriter, _ *http.Request) {
 		data, err := webFS.ReadFile("web/dashboard.html")
 		if err != nil {
@@ -122,15 +125,19 @@ func main() {
 			http.NotFound(w, r)
 			return
 		}
+		isLive := cMode.Effective == "carbonintensity" || cMode.Effective == "electricitymaps"
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{
-			"name":       "EcoScale",
-			"version":    "0.3.0",
-			"tagline":    "World's First Carbon-Aware Kubernetes Scheduler",
-			"dashboard":  "/ui",
-			"dashboard_ui": "/ui/",
-			"carbon_api": cfg.CarbonAPI,
-			"dry_run":    cfg.DryRun,
+			"name":                 "EcoScale",
+			"version":              "0.3.0",
+			"tagline":              "World's First Carbon-Aware Kubernetes Scheduler",
+			"dashboard":            "/ui",
+			"dashboard_ui":         "/ui/",
+			"carbon_api":           cfg.CarbonAPI,
+			"requested_carbon_api": cMode.Requested,
+			"effective_carbon_api": cMode.Effective,
+			"is_live_data":         isLive,
+			"dry_run":              cfg.DryRun,
 		})
 	})
 
@@ -157,6 +164,69 @@ func main() {
 	}
 }
 
+func newCarbonClientFromCfg(cfg config.Config) (carbon.Client, *carbonMode) {
+	req := strings.ToLower(strings.TrimSpace(cfg.CarbonAPI))
+	if req == "" {
+		req = "mock"
+	}
+	mode := &carbonMode{Requested: req, Effective: req}
+
+	switch req {
+	case "carbonintensity":
+		return carbon.NewCarbonIntensityClient(), mode
+	case "electricitymaps":
+		if strings.TrimSpace(cfg.CarbonAPIKey) == "" {
+			slog.Warn("ECOSCALE_CARBON_API=electricitymaps but ECOSCALE_CARBON_API_KEY empty; using demo (mock) data")
+			mode.Effective = "mock"
+			return carbon.NewMockClient(true), mode
+		}
+		return carbon.NewElectricityMapsClient(cfg.CarbonAPIKey), mode
+	default:
+		if req != "mock" {
+			slog.Warn("unknown ECOSCALE_CARBON_API, using mock", "value", req)
+		}
+		mode.Effective = "mock"
+		return carbon.NewMockClient(true), mode
+	}
+}
+
+func statusHandler(cMode *carbonMode, threshold float64) http.HandlerFunc {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		isLive := cMode.Effective == "carbonintensity" || cMode.Effective == "electricitymaps"
+		dataMode := "demo"
+		title := "Demo data"
+		msg := "Numbers are simulated (realistic-style mock). Safe for trying the UI without API keys."
+		if isLive {
+			dataMode = "live"
+			title = "Live grid data"
+			if cMode.Effective == "carbonintensity" {
+				msg = "Using CarbonIntensity.org.uk (UK regional grid). Cloud regions map to UK zones where noted in README."
+			} else {
+				msg = "Using ElectricityMaps API for mapped zones (see RegionMapping in code)."
+			}
+		} else if strings.EqualFold(cMode.Requested, "electricitymaps") {
+			title = "Demo data (API key missing)"
+			msg = "You set ECOSCALE_CARBON_API=electricitymaps but ECOSCALE_CARBON_API_KEY is empty — showing mock data. Add your key and restart (README → Live carbon in 4 steps)."
+		}
+
+		resp := map[string]any{
+			"data_mode":                  dataMode,
+			"is_live_data":               isLive,
+			"requested_carbon_api":       cMode.Requested,
+			"effective_carbon_api":       cMode.Effective,
+			"title":                      title,
+			"message":                    msg,
+			"carbon_threshold_gco2kwh":   threshold,
+			"readme_live_section":        "https://github.com/rahul-tarka/eco-scale-optimizer/blob/main/README.md#live-carbon-in-4-steps-or-less",
+			"notices": []string{
+				"The “Best time to run” widget uses a simple UTC solar window — it is not fetched from the grid API.",
+			},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+	}
+}
+
 func loadConfig() config.Config {
 	cfg := config.DefaultConfig()
 	cfg.CarbonAPI = strings.ToLower(getEnv("ECOSCALE_CARBON_API", "mock"))
@@ -166,21 +236,6 @@ func loadConfig() config.Config {
 	cfg.EvictionCapPct = getFloatEnv("ECOSCALE_EVICTION_CAP_PCT", 10)
 	cfg.EnableExecution = getEnv("ECOSCALE_ENABLE_EXECUTION", "false") == "true"
 	return cfg
-}
-
-func newCarbonClient(cfg config.Config) carbon.Client {
-	switch cfg.CarbonAPI {
-	case "carbonintensity":
-		return carbon.NewCarbonIntensityClient()
-	case "electricitymaps":
-		if cfg.CarbonAPIKey == "" {
-			slog.Warn("ECOSCALE_CARBON_API_KEY not set; falling back to mock")
-			return carbon.NewMockClient(true)
-		}
-		return carbon.NewElectricityMapsClient(cfg.CarbonAPIKey)
-	default:
-		return carbon.NewMockClient(true)
-	}
 }
 
 func runReconciliationLoop(ctx context.Context, engine *optimizer.Engine, analyzer *kubernetes.Analyzer, exec *executor.Executor, cfg config.Config, interval time.Duration) {
@@ -208,13 +263,11 @@ func runOnce(ctx context.Context, engine *optimizer.Engine, analyzer *kubernetes
 
 	metrics.CarbonIntensityGauge.Set(result.CurrentIntensity)
 
-	// Get pods for safety limits
 	var pods []kubernetes.PodInfo
 	if analyzer != nil {
 		pods, _ = analyzer.ListFlexiblePods(ctx)
 	}
 
-	// Apply safety limits (caps evictions when executing)
 	filtered := safety.ApplySafetyLimits(cfg, pods, result.Recommendations)
 
 	var totalCO2Saved float64
@@ -226,7 +279,6 @@ func runOnce(ctx context.Context, engine *optimizer.Engine, analyzer *kubernetes
 		metrics.CO2SavedTotal.Add(totalCO2Saved)
 	}
 
-	// Execute if enabled
 	if exec != nil && safety.ShouldExecute(cfg) && len(filtered) > 0 {
 		n, err := exec.Execute(ctx, filtered)
 		if err != nil {

@@ -20,7 +20,15 @@
   </nav>
 
   <main class="max-w-6xl mx-auto px-6 py-8">
-    <h1 class="text-2xl font-bold mb-6">Carbon-Aware Dashboard</h1>
+    <h1 class="text-2xl font-bold mb-4">Carbon-Aware Dashboard</h1>
+
+    <!-- Demo vs Live banner (from /api/status) -->
+    <div id="dataSourceBanner" class="mb-6 p-4 rounded-xl border text-sm leading-relaxed hidden">
+      <p class="font-semibold text-base mb-1" id="bannerTitle"></p>
+      <p class="text-slate-300" id="bannerMessage"></p>
+      <p class="text-slate-500 text-xs mt-2" id="bannerMeta"></p>
+      <a id="bannerReadme" href="#" class="text-emerald-400 hover:underline text-xs mt-2 inline-block hidden">How to use live data (4 steps) →</a>
+    </div>
 
     <!-- Controls -->
     <div class="flex flex-wrap gap-4 mb-8 p-4 rounded-lg bg-slate-800/50 border border-slate-700">
@@ -43,7 +51,6 @@
       </div>
     </div>
 
-    <!-- Carbon Intensity Card -->
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
       <div class="p-6 rounded-xl bg-slate-800/50 border border-slate-700">
         <h3 class="text-slate-400 text-sm font-medium mb-1">Current Region</h3>
@@ -56,12 +63,11 @@
       </div>
       <div class="p-6 rounded-xl bg-slate-800/50 border border-slate-700">
         <h3 class="text-slate-400 text-sm font-medium mb-1">Best Time to Run</h3>
-        <p id="bestTime" class="text-lg font-medium text-emerald-400">10:00–16:00 UTC (solar peak)</p>
+        <p id="bestTime" class="text-lg font-medium text-emerald-400">—</p>
         <p id="bestTimeNote" class="text-slate-500 text-sm mt-1">—</p>
       </div>
     </div>
 
-    <!-- Multi-Region Comparison -->
     <div class="mb-8">
       <h2 class="text-lg font-semibold mb-4">Region Comparison</h2>
       <div class="overflow-x-auto">
@@ -78,29 +84,26 @@
       </div>
     </div>
 
-    <!-- Region Shift -->
     <div id="regionShiftSection" class="mb-8 hidden">
       <h2 class="text-lg font-semibold mb-4">Sun-Chaser: Region Shift</h2>
       <div class="p-6 rounded-xl bg-emerald-900/20 border border-emerald-700/50">
         <p class="mb-2"><span id="shiftFrom">—</span> → <span id="shiftTo" class="text-emerald-400 font-semibold">—</span></p>
         <p class="text-slate-400 text-sm mb-4">Savings: <span id="shiftSavings" class="text-emerald-400 font-semibold">—</span>%</p>
         <div class="flex gap-2">
-          <button class="copy-btn px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm" data-copy="karpenter">Copy Karpenter Config</button>
-          <button class="copy-btn px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm" data-copy="autoscaler">Copy CA Config</button>
+          <button type="button" class="copy-btn px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm" data-copy="karpenter">Copy Karpenter Config</button>
+          <button type="button" class="copy-btn px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm" data-copy="autoscaler">Copy CA Config</button>
         </div>
         <pre id="karpenterConfig" class="hidden"></pre>
         <pre id="autoscalerConfig" class="hidden"></pre>
       </div>
     </div>
 
-    <!-- Recommendations -->
     <div class="mb-8">
       <h2 class="text-lg font-semibold mb-4">Recommendations</h2>
       <div id="recommendationsList" class="space-y-3"></div>
       <p id="noRecs" class="text-slate-500 hidden">No recommendations. Carbon intensity is within threshold.</p>
     </div>
 
-    <!-- What-If Calculator -->
     <div class="mb-8 p-6 rounded-xl bg-slate-800/50 border border-slate-700">
       <h2 class="text-lg font-semibold mb-4">What-If Calculator</h2>
       <p class="text-slate-400 text-sm mb-4">Estimate CO2 savings if you shift pods to a greener region.</p>
@@ -117,21 +120,19 @@
           <label class="text-sm text-slate-400 block mb-1">To region intensity (gCO2/kWh)</label>
           <input type="number" id="toIntensity" value="180" class="bg-slate-700 text-white px-3 py-2 rounded border border-slate-600 w-28">
         </div>
-        <button id="calcBtn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded font-medium">Calculate</button>
+        <button type="button" id="calcBtn" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded font-medium">Calculate</button>
       </div>
       <div id="calcResult" class="mt-4 p-4 rounded bg-slate-700/50 hidden">
         <p class="text-emerald-400 font-semibold">Estimated savings: <span id="calcSavings">—</span> kg CO2/hour</p>
       </div>
     </div>
 
-    <!-- Last updated -->
     <p id="lastUpdated" class="text-slate-500 text-sm">—</p>
   </main>
 
   <script>
     const API_BASE = '';
     let refreshTimer = null;
-    let lastData = null;
 
     function badge(intensity) {
       if (intensity <= 150) return { cls: 'badge-green', text: '🟢 Low' };
@@ -144,7 +145,7 @@
       const isPeak = h >= 10 && h <= 16;
       return {
         text: isPeak ? 'Now (solar peak)' : '10:00–16:00 UTC',
-        note: isPeak ? 'Good time to run batch jobs' : 'Wait for solar peak for lower intensity'
+        note: isPeak ? 'Simple UTC heuristic (not from grid API)' : 'Optional tip — not from grid API'
       };
     }
 
@@ -152,10 +153,39 @@
       return (g / 1000).toFixed(3);
     }
 
+    async function fetchStatus() {
+      const r = await fetch(`${API_BASE}/api/status`);
+      if (!r.ok) return null;
+      return r.json();
+    }
+
+    function renderBanner(st) {
+      const box = document.getElementById('dataSourceBanner');
+      if (!st) {
+        box.classList.add('hidden');
+        return;
+      }
+      box.classList.remove('hidden');
+      const live = st.is_live_data === true;
+      box.className = 'mb-6 p-4 rounded-xl border text-sm leading-relaxed ' +
+        (live ? 'bg-emerald-950/40 border-emerald-600/50' : 'bg-amber-950/30 border-amber-600/40');
+      document.getElementById('bannerTitle').textContent = st.title || (live ? 'Live data' : 'Demo data');
+      document.getElementById('bannerMessage').textContent = st.message || '';
+      document.getElementById('bannerMeta').textContent =
+        `Requested: ${st.requested_carbon_api} · Effective: ${st.effective_carbon_api}` +
+        (st.notices && st.notices[0] ? ' · ' + st.notices[0] : '');
+      const link = document.getElementById('bannerReadme');
+      if (!live && st.readme_live_section) {
+        link.href = st.readme_live_section;
+        link.classList.remove('hidden');
+      } else {
+        link.classList.add('hidden');
+      }
+    }
+
     async function fetchRecommendations() {
       const thresh = document.getElementById('thresholdSlider').value;
-      const url = `${API_BASE}/recommendations?threshold=${thresh}`;
-      const r = await fetch(url);
+      const r = await fetch(`${API_BASE}/recommendations?threshold=${thresh}`);
       if (!r.ok) throw new Error(r.statusText);
       return r.json();
     }
@@ -168,7 +198,6 @@
     }
 
     function render(data) {
-      lastData = data;
       const b = badge(data.current_intensity);
       document.getElementById('currentRegion').textContent = data.current_region;
       document.getElementById('currentIntensity').textContent = data.current_intensity;
@@ -179,7 +208,6 @@
       document.getElementById('bestTime').textContent = bt.text;
       document.getElementById('bestTimeNote').textContent = bt.note;
 
-      // Region shift
       if (data.region_shift) {
         document.getElementById('regionShiftSection').classList.remove('hidden');
         document.getElementById('shiftFrom').textContent = data.region_shift.from_region;
@@ -191,7 +219,6 @@
         document.getElementById('regionShiftSection').classList.add('hidden');
       }
 
-      // Recommendations
       const recs = data.recommendations || [];
       const list = document.getElementById('recommendationsList');
       const noRecs = document.getElementById('noRecs');
@@ -212,14 +239,13 @@
                 <p class="text-slate-500 text-xs mt-1">Target: ${r.target}</p>
                 ${r.co2_savings ? `<p class="text-emerald-400 text-xs mt-1">~${savingsKg} kg CO2 saved</p>` : ''}
               </div>
-              ${r.details && r.type === 'region_shift' ? `<button class="copy-rec-btn px-2 py-1 bg-slate-700 rounded text-xs" data-details="${encodeURIComponent(r.details || '')}">Copy</button>` : ''}
+              ${r.details && r.type === 'region_shift' ? `<button type="button" class="copy-rec-btn px-2 py-1 bg-slate-700 rounded text-xs" data-details="${encodeURIComponent(r.details || '')}">Copy</button>` : ''}
             </div>
           `;
           list.appendChild(div);
         });
       }
 
-      // What-if defaults
       document.getElementById('fromIntensity').value = data.current_intensity;
       if (data.region_shift) {
         document.getElementById('toIntensity').value = data.region_shift.intensity_to || 180;
@@ -228,15 +254,10 @@
       document.getElementById('lastUpdated').textContent = `Last updated: ${new Date().toLocaleString()}`;
     }
 
-    function escapeHtml(s) {
-      const d = document.createElement('div');
-      d.textContent = s;
-      return d.innerHTML;
-    }
-
     async function load() {
       try {
-        const [rec, regions] = await Promise.all([fetchRecommendations(), fetchRegions()]);
+        const [st, rec, regions] = await Promise.all([fetchStatus(), fetchRecommendations(), fetchRegions()]);
+        renderBanner(st);
         const data = {
           current_region: rec.current_region,
           current_intensity: rec.current_intensity,
@@ -251,10 +272,8 @@
             cluster_autoscaler_config: rec.region_shift.cluster_autoscaler_config
           } : null
         };
-
         render(data);
 
-        // Multi-region table
         const tbody = document.getElementById('regionsTable');
         tbody.innerHTML = '';
         if (regions && regions.length > 0) {
@@ -270,7 +289,6 @@
             tbody.appendChild(tr);
           });
         } else {
-          // Fallback: use rec data for 2 regions
           const regionsFallback = [
             { region: rec.current_region, intensity: rec.current_intensity },
             ...(rec.region_shift ? [{ region: rec.region_shift.to_region, intensity: rec.region_shift.intensity_to }] : [])
@@ -307,7 +325,6 @@
       document.getElementById('thresholdValue').textContent = e.target.value;
       load();
     });
-    document.getElementById('thresholdSlider').addEventListener('change', load);
 
     document.getElementById('calcBtn').addEventListener('click', () => {
       const pods = parseInt(document.getElementById('podCount').value, 10) || 1;

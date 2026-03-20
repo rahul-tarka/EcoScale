@@ -6,7 +6,8 @@ Access the service:
   kubectl port-forward -n {{ .Release.Namespace }} svc/{{ include "ecoscale.fullname" . }} 8080:8080
 
 Then visit:
-  - http://localhost:8080/ui        - Carbon-Aware Dashboard
+  - http://localhost:8080/ui        - Dashboard (Demo vs Live banner; default may be mock — see README)
+  - http://localhost:8080/api/status - Carbon backend status
   - http://localhost:8080/           - API info
   - http://localhost:8080/health     - Health check
   - http://localhost:8080/metrics    - Prometheus metrics (CO2_Saved_Total, etc.)

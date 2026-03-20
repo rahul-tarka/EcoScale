@@ -25,3 +25,6 @@ go.work
 # OS
 .DS_Store
 Thumbs.db
+
+# Local secrets (use .env.example as template)
+.env

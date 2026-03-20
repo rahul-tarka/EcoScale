@@ -1,3 +1,5 @@
+# Put overrides in `.env` next to this file (see `.env.example`). Compose loads it automatically.
+# Default = demo/mock carbon. Live data: README → "Live carbon in 4 steps or less".
 services:
   ecoscale:
     build: .
@@ -7,7 +9,5 @@ services:
       ECOSCALE_IN_CLUSTER: "false"
       ECOSCALE_CARBON_THRESHOLD: "350"
       ECOSCALE_INTERVAL: "1m"
-      ECOSCALE_CARBON_API: "mock"
-    # Optional: live carbon — carbonintensity | electricitymaps
-    # ECOSCALE_CARBON_API: "electricitymaps"
-    # ECOSCALE_CARBON_API_KEY: "your-key"
+      ECOSCALE_CARBON_API: ${ECOSCALE_CARBON_API:-mock}
+      ECOSCALE_CARBON_API_KEY: ${ECOSCALE_CARBON_API_KEY:-}

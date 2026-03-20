@@ -5,6 +5,10 @@
 [![Go 1.22+](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 
+> **Dashboard data:** Default Docker Compose run uses **demo (mock)** carbon — no API key. The UI shows a **Demo vs Live** banner. For **real grid data** in **3–4 steps**, see [Live carbon in 4 steps or less](#live-carbon-in-4-steps-or-less).
+>
+> **Contributing:** Use **one clone** on `main` when possible — see [CONTRIBUTING.md](CONTRIBUTING.md) (avoids multi-worktree merge pain).
+
 ---
 
 ## Why EcoScale?
@@ -94,6 +98,21 @@ docker compose up
 
 Then open **http://localhost:8080/ui** for the Carbon-Aware Dashboard (carbon intensity, region comparison, recommendations, What-If calculator).
 
+- **http://localhost:8080/api/status** — demo vs live, messages for the dashboard banner  
+- **http://localhost:8080/** — JSON includes `is_live_data`, `effective_carbon_api`  
+
+### Live carbon in 4 steps or less
+
+**UK grid, free, no API key (3 steps):**
+
+```bash
+git clone https://github.com/rahul-tarka/eco-scale-optimizer.git && cd eco-scale-optimizer
+printf 'ECOSCALE_CARBON_API=carbonintensity\n' > .env
+docker compose up
+```
+
+**ElectricityMaps, global zones (4 steps):** (1) Get a token at [ElectricityMaps](https://www.electricitymaps.com/) → (2) clone repo → (3) `cp .env.example .env` and set `ECOSCALE_CARBON_API=electricitymaps` + `ECOSCALE_CARBON_API_KEY` → (4) `docker compose up`.
+
 ### 2. Build & Run (Standalone)
 
 ```bash
@@ -165,7 +184,8 @@ Safety limits apply: max 10% of flexible pods evicted per cycle; protected workl
 
 | Endpoint | Description |
 |----------|-------------|
-| `GET /` | API info |
+| `GET /` | API info (`is_live_data`, `effective_carbon_api`, …) |
+| `GET /api/status` | Demo vs live + banner text for the dashboard |
 | `GET /ui` | Carbon-Aware Dashboard (embedded): regions, What-If, threshold slider |
 | `GET /ui/` | Classic dashboard (`ui/index.html`) |
 | `GET /health` | Health check |
@@ -215,6 +235,9 @@ metadata:
 ```
 ecoscale/
 ├── cmd/ecoscale/main.go          # Entrypoint, HTTP server, reconciliation loop
+├── cmd/ecoscale/web/dashboard.html  # embedded /ui dashboard
+├── docker-compose.yml
+├── .env.example
 ├── internal/
 │   ├── carbon/
 │   │   ├── client.go             # Carbon intensity client (mock + interface)
@@ -251,7 +274,7 @@ ecoscale/
 
 ## Roadmap
 
-- [x] **Dashboard UI (v0.3)** — Carbon intensity, region comparison, recommendations, What-If calculator
+- [x] **Dashboard UI (v0.3)** — Carbon intensity, region comparison, recommendations, What-If calculator, **Demo vs Live** banner (`/api/status`)
 - [ ] **Webhook Scheduler** — Intercept pod scheduling (not just recommendations)
 - [ ] **Multi-region Karpenter** — Auto-apply NodePool changes
 - [ ] **Carbon budget** — Enforce daily/weekly CO2 caps per namespace
