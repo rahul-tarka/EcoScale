@@ -45,6 +45,15 @@ func NewEngine(carbonClient carbon.Client, analyzer *kubernetes.Analyzer, config
 
 // Run produces a set of recommendations based on current carbon intensity and cluster state.
 func (e *Engine) Run(ctx context.Context) (*Result, error) {
+	return e.RunWithThreshold(ctx, e.config.CarbonThreshold)
+}
+
+// RunWithThreshold runs with an optional threshold override (0 = use config default).
+func (e *Engine) RunWithThreshold(ctx context.Context, threshold float64) (*Result, error) {
+	thresh := threshold
+	if thresh <= 0 {
+		thresh = e.config.CarbonThreshold
+	}
 	result := &Result{Timestamp: time.Now().UTC()}
 
 	// 1. Get current region
@@ -65,13 +74,13 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 	result.IntensitySource = "carbon"
 
 	// 3. High intensity? Suggest node-drain / scale-down for non-critical pods
-	if intensity.Value > e.config.CarbonThreshold {
+	if intensity.Value > thresh {
 		pods, _ := e.listFlexiblePods(ctx)
 		for _, p := range pods {
 			if !p.Critical && p.Phase == "Running" {
 				result.Recommendations = append(result.Recommendations, Recommendation{
 					Type:      ActionScaleDown,
-					Reason:    fmt.Sprintf("Carbon intensity %.0f gCO2/kWh exceeds threshold %.0f", intensity.Value, e.config.CarbonThreshold),
+					Reason:    fmt.Sprintf("Carbon intensity %.0f gCO2/kWh exceeds threshold %.0f", intensity.Value, thresh),
 					Target:    fmt.Sprintf("%s/%s", p.Namespace, p.Name),
 					Details:   "Consider scaling down or deferring non-critical workload",
 					Priority:  1,
@@ -84,7 +93,7 @@ func (e *Engine) Run(ctx context.Context) (*Result, error) {
 		if len(pods) > 0 {
 			result.Recommendations = append(result.Recommendations, Recommendation{
 				Type:      ActionNodeDrain,
-				Reason:    fmt.Sprintf("Carbon intensity %.0f gCO2/kWh exceeds threshold %.0f", intensity.Value, e.config.CarbonThreshold),
+				Reason:    fmt.Sprintf("Carbon intensity %.0f gCO2/kWh exceeds threshold %.0f", intensity.Value, thresh),
 				Target:    "nodes with ecoscale/flexible pods",
 				Details:   "Consider draining nodes during high-carbon periods to reduce consumption",
 				Priority:  2,

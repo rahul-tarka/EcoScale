@@ -76,7 +76,16 @@ To preview locally: `cd web && python3 -m http.server 8000` then open http://loc
 
 ## Quick Start
 
-### 1. Build & Run (Standalone)
+### 1. Docker Compose (Recommended — 2 commands)
+
+```bash
+git clone https://github.com/rahul-tarka/eco-scale-optimizer.git && cd eco-scale-optimizer
+docker compose up
+```
+
+Then open **http://localhost:8080/ui** for the Carbon-Aware Dashboard (carbon intensity, region comparison, recommendations, What-If calculator).
+
+### 2. Build & Run (Standalone)
 
 ```bash
 # Build
@@ -86,14 +95,16 @@ make build
 ECOSCALE_IN_CLUSTER=false ./bin/ecoscale
 ```
 
-### 2. Docker
+Open **http://localhost:8080/ui** for the dashboard.
+
+### 3. Docker
 
 ```bash
-docker build -t ecoscale:0.1.0 .
-docker run -p 8080:8080 ecoscale:0.1.0
+docker build -t ecoscale:0.3.0 .
+docker run -p 8080:8080 ecoscale:0.3.0
 ```
 
-### 3. Helm (Deploy to kube-system)
+### 4. Helm (Deploy to kube-system)
 
 ```bash
 helm install ecoscale ./helm/ecoscale -n kube-system
@@ -119,9 +130,11 @@ helm install ecoscale ./helm/ecoscale -n kube-system
 | Endpoint | Description |
 |----------|-------------|
 | `GET /` | API info |
+| `GET /ui` | Carbon-Aware Dashboard (carbon intensity, region comparison, recommendations) |
 | `GET /health` | Health check |
 | `GET /metrics` | Prometheus metrics |
-| `GET /recommendations` | Live optimization recommendations (JSON) |
+| `GET /recommendations` | Live optimization recommendations (JSON). Query: `?threshold=350` |
+| `GET /api/regions?regions=us-east-1,us-west-2` | Multi-region carbon intensity comparison |
 
 ### Prometheus Metrics
 
@@ -176,6 +189,7 @@ ecoscale/
 
 ## Roadmap
 
+- [x] **Dashboard UI (v0.3)** — Carbon intensity, region comparison, recommendations, What-If calculator
 - [ ] **Live Carbon API** — CarbonIntensity.org.uk / ElectricityMaps integration
 - [ ] **Webhook Scheduler** — Intercept pod scheduling (not just recommendations)
 - [ ] **Multi-region Karpenter** — Auto-apply NodePool changes

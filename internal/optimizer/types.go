@@ -13,23 +13,23 @@ const (
 
 // Recommendation represents a single optimization recommendation.
 type Recommendation struct {
-	Type        ActionType
-	Reason      string
-	Target      string
-	Details     string
-	Priority    int
-	Timestamp   time.Time
-	CO2Savings  float64 // Estimated gCO2 saved
+	Type        ActionType `json:"type"`
+	Reason      string     `json:"reason"`
+	Target      string     `json:"target"`
+	Details     string     `json:"details"`
+	Priority    int        `json:"priority"`
+	Timestamp   time.Time  `json:"timestamp"`
+	CO2Savings  float64    `json:"co2_savings"` // Estimated gCO2 saved
 }
 
 // RegionShiftRecommendation represents a Sun-Chaser recommendation.
 type RegionShiftRecommendation struct {
-	FromRegion      string
-	ToRegion        string
-	IntensityFrom   float64
-	IntensityTo     float64
-	SavingsPercent  float64
-	KarpenterConfig string
-	ClusterAutoscalerConfig string
-	Timestamp       time.Time
+	FromRegion               string    `json:"from_region"`
+	ToRegion                 string    `json:"to_region"`
+	IntensityFrom            float64   `json:"intensity_from"`
+	IntensityTo              float64   `json:"intensity_to"`
+	SavingsPercent           float64   `json:"savings_percent"`
+	KarpenterConfig          string    `json:"karpenter_config"`
+	ClusterAutoscalerConfig  string    `json:"cluster_autoscaler_config"`
+	Timestamp                time.Time `json:"timestamp"`
 }

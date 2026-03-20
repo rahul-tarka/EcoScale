@@ -1,0 +1,11 @@
+services:
+  ecoscale:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      ECOSCALE_IN_CLUSTER: "false"
+      ECOSCALE_CARBON_THRESHOLD: "350"
+      ECOSCALE_INTERVAL: "1m"
+    # Optional: ElectricityMaps API key for real carbon data
+    # ECOSCALE_ELECTRICITY_MAPS_API_KEY: "your-key"

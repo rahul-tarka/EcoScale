@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -19,6 +21,9 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
+
+//go:embed web
+var webFS embed.FS
 
 const (
 	defaultAddr         = ":8080"
@@ -75,7 +80,17 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok"}`))
 	})
+	mux.HandleFunc("/ui", func(w http.ResponseWriter, _ *http.Request) {
+		data, err := webFS.ReadFile("web/dashboard.html")
+		if err != nil {
+			http.Error(w, "dashboard not found", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(data)
+	})
 	mux.HandleFunc("/recommendations", recommendationsHandler(engine))
+	mux.HandleFunc("/api/regions", regionsHandler(carbonClient))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
@@ -84,8 +99,9 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"name":    "EcoScale",
-			"version": "0.1.0",
+			"version": "0.3.0",
 			"tagline": "World's First Carbon-Aware Kubernetes Scheduler",
+			"dashboard": "/ui",
 		})
 	})
 
@@ -157,7 +173,13 @@ func runOnce(ctx context.Context, engine *optimizer.Engine) {
 
 func recommendationsHandler(engine *optimizer.Engine) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		result, err := engine.Run(r.Context())
+		threshold := getFloatEnv("ECOSCALE_CARBON_THRESHOLD", defaultCarbonThreshold)
+		if t := r.URL.Query().Get("threshold"); t != "" {
+			if f, err := parseFloat(t); err == nil && f > 0 {
+				threshold = f
+			}
+		}
+		result, err := engine.RunWithThreshold(r.Context(), threshold)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -165,6 +187,44 @@ func recommendationsHandler(engine *optimizer.Engine) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(result)
 	}
+}
+
+func regionsHandler(carbonClient carbon.Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		regionsParam := r.URL.Query().Get("regions")
+		if regionsParam == "" {
+			regionsParam = "us-east-1,us-west-2,eu-north-1,ap-southeast-1"
+		}
+		regions := strings.Split(regionsParam, ",")
+		ctx := r.Context()
+		var out []struct {
+			Region    string  `json:"region"`
+			Intensity float64 `json:"intensity"`
+		}
+		for _, region := range regions {
+			region = strings.TrimSpace(region)
+			if region == "" {
+				continue
+			}
+			intensity, err := carbonClient.GetIntensity(ctx, region)
+			if err != nil {
+				slog.Warn("failed to get intensity for region", "region", region, "error", err)
+				continue
+			}
+			out = append(out, struct {
+				Region    string  `json:"region"`
+				Intensity float64 `json:"intensity"`
+			}{Region: region, Intensity: intensity.Value})
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(out)
+	}
+}
+
+func parseFloat(s string) (float64, error) {
+	var f float64
+	_, err := fmt.Sscanf(s, "%f", &f)
+	return f, err
 }
 
 func getEnv(key, def string) string {
